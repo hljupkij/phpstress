@@ -499,8 +499,8 @@ if (isset($argv[1])) {
   $mpc = 150;
   $dbr = 0.02;
   $dbc = 0.7;
-
-
+  $ssl = false;
+  $port = 80;
 
 
   // lets assign all variables now and get ready for attack
@@ -512,6 +512,20 @@ if (isset($argv[1])) {
       if ($r == 0){ $r++;$r++; }else{
       $r++;}
       $socks = $results[$r];
+    }
+    // Check if SSL
+    if ($com == "--ssl"){
+      $r = $key;
+      if ($r == 0){ $r++;$r++; }else{
+      $r++;}
+      $ssl = $results[$r];
+    }
+    // Port number for connection Default is 80
+    if ($com == "-p"){
+      $r = $key;
+      if ($r == 0){ $r++;$r++; }else{
+      $r++;}
+      $port = $results[$r];
     }
     // Maximum requests Default is 100000000
     if ($com == "-m"){
@@ -561,6 +575,12 @@ if (isset($argv[1])) {
     exit(0);
   }
 
+  // SSL check now  
+  if ((strtolower($ssl) == "n") || (strtolower($ssl) == "y")){}else{
+    // error socks is either a n or y question 
+    echo "   [!]  ERROR: SSL is either a [y]es or [n]o question\n\n";
+    exit(0);
+  }
 
   // Socks check now  
   if ((strtolower($socks) == "n") || (strtolower($socks) == "y")){}else{
